@@ -4,20 +4,13 @@
 #include <string.h>//定义字符数组
 #include <math.h>
 #include <ctype.h>
-#define LEN sizeof(struct book)//有关图书信息的结构体
+#include "book_management.h"
+#define LEN sizeof(struct _Book)//有关图书信息的结构体
 #define LEN1 sizeof(struct reader)//有关读者信息的结构体
 #define LEN2 sizeof(struct land)//有关登录系统的结构体
 
 
-typedef struct book//图书信息
-{
-	unsigned int num;
-	char *nam;
-	char *aut;
-	unsigned int year;
-	unsigned int many,manyofremain;
-	struct book*next;
-};
+
 
 struct reader//读者借阅信息
 {
@@ -38,20 +31,22 @@ struct land//登录信息
 
 int tjdzzs();
 int store_books(FILE *file);
+int load_books(FILE *file);
 int tjzs();//统计library文本个数函数
 void tsmenu();//显示图书信息菜单
 void jmenu();//显示借阅信息菜单
 void lmenu();//显示登录菜单
 void tsmain();//图书菜单功能
 void cxts();//查询图书菜单 
-void cxtsbyyear();//按照年份查询图书
-void cxtsbytitle();//按照标题查询图书
-void cxtsbyauthor();//按照作者查询图书 
-void zjts();//增加图书
-void scts();//删除图书
+BookArray find_book_by_year (unsigned int year);//按照年份查询图书
+BookArray find_book_by_title (const char *title);//按照标题查询图书
+BookArray find_book_by_author (const char *author);//按照作者查询图书 
+int zjts(Book);//增加图书
+int scts(Book);//删除图书
 void llts();//管理员浏览图书
 void lltsfornotlogin();//未登录时的浏览图书
 void lltsforusers();//用户浏览图书 
+int size_List(Book list);
 
 void jmain();//读者借阅信息
 void js();//借书
@@ -63,7 +58,10 @@ void land();//登录功能系统
 void xinjian();//创建账号密码
 void lmain();//登录界面函数
 char user[20]={'\0'};//界面显示用户名
-int num=1;//存储书的最终ID 
+char title;
+char author;
+int year; 
+int a=1;//存储书的最终ID 
 
 
 
@@ -131,8 +129,9 @@ return ;
 
 void tsmain()
 {
-	void zjts();
-	void scts();
+	int zjts(Book);
+	int scts(Book);
+	Book book;
 	void ctts();
 	void llts();
 	int a;
@@ -144,10 +143,12 @@ void tsmain()
 	switch(a)
 	{
 	case 1:
-		zjts();
+		zjts(book);
+		tsmain();
 		break;
 	case 2:
-		scts();
+		scts(book);
+		tsmain();
 		break;
 	case 3:
 		cxts();
@@ -163,17 +164,16 @@ void tsmain()
 }
 
 
-void zjts()//增加图书
+int zjts(Book book)//增加图书
 {
 	FILE*fp;
 	char i;
 	int c;
-	int a;
 	int n;
 	int year;
-	int many;
+	int copies;
 	int manyofremain;
-    char  nam[20]={'\0'},aut[20]={'\0'},many1[10]={'\0'},year1[20]={'\0'};
+    char  title[20]={'\0'},authors[20]={'\0'},many1[10]={'\0'},year1[20]={'\0'};
      
 
     if ((fp=fopen("library.txt","r"))==NULL)//if语句：打开图书馆文件，不存在此文件则新建
@@ -188,10 +188,10 @@ void zjts()//增加图书
 	fp=fopen("library.txt","a");
 
 		printf("Enter the title of the book you wish to add: ");
-		gets(nam);
+		gets(title);
 		
 		printf("Enter the author of the book you wish to add: ");
-		gets(aut);
+		gets(authors);
 		
 		printf("Enter the year that the book you wish to add was released: ");
 		gets(year1);
@@ -199,23 +199,35 @@ void zjts()//增加图书
 		printf("Enter the number of copies of the book you wish to add: ");
 		gets(many1);
 		
-		many=atoi(many1);
+		copies=atoi(many1);
 		manyofremain=atoi(many1);
+		
+		
 		
 		if(isdigit(year1[0])!=0)
 		{
+			book.title=(char*)malloc(sizeof(char));
+			book.authors=(char*)malloc(sizeof(char));
 			year=atoi(year1);
-			fprintf(fp,"%-8d%-19s%-14s%-18d%-8d%-8d\n",num,nam,aut,year,many,manyofremain);
-			num=num+1; 
+			strcpy(book.title,title);
+		    strcpy(book.authors,authors);
+		    book.year=year;
+		    book.copies=copies;
+		    book.manyofremain=manyofremain;
+			fprintf(fp,"%-8d%-19s%-14s%-18d%-8d%-8d\n",a,book.title,book.authors,book.year,book.copies,book.manyofremain);
+			a=a+1;
 			printf("\nBook was successfully added!\n");
+			fclose(fp);
+			return 0;
 		}
 		else
 		{
 			printf("Sorry, you attempt to add an invalid book, please try again.\n\n");
+			return -1;
 		}
 
-	fclose(fp);
-	tsmain();//返回上一层
+	
+	//返回上一层
 }
 
 int store_books(FILE *file)
@@ -246,10 +258,10 @@ int load_books(FILE *file)
    }
 }
 
-void scts()//删除图书
+int scts(Book book)//删除图书
 {
-	   struct book *head=NULL;
-       struct book *p,*p1,*p2;
+	   struct _Book *head=NULL;
+       struct _Book *p,*p1,*p2;
        int tmany=0,tmanyofremain=0,n=0,j,k,q;
        unsigned int tyear,jyear,tnum,jnum,jjnum;
        char  tnam[20]={'\0'},taut[20]={'\0'};
@@ -260,7 +272,7 @@ void scts()//删除图书
        if ((fp=fopen("library.txt","r"))==NULL)//打开文件
        {
            printf("\nThe record file does not exist!");
-           tsmain();
+           return -1;
        }
 
 	   else//实现删除的功能
@@ -279,7 +291,7 @@ void scts()//删除图书
 		  	if(jjnum==jnum)
 		  	{
 		  		printf("Delete failed! Because someone has already borrowed the book!\n");
-		  		goto exit;
+		  		return -1;
 			  }
 		  }
 
@@ -291,25 +303,25 @@ void scts()//删除图书
 	          n++;//相同返回值为0不执行if语句继续循环，不同则执行直到将所有不同的书名建立成链表
 	            if (n==1)//建立链表
                 {
-		          p1=p2=(struct book*)malloc(LEN);
+		          p1=p2=(struct _Book*)malloc(LEN);
                   head=p1;
-                  p1->aut=(char*)malloc(sizeof(char));
-                  p1->nam=(char*)malloc(sizeof(char));
+                  p1->authors=(char*)malloc(sizeof(char));
+                  p1->title=(char*)malloc(sizeof(char));
 				}
                 else
 			    {
 			      p2->next=p1;
 				  p2=p1;
-                  p1=(struct book*)malloc(LEN);//新建链表
-                  p1->aut=(char*)malloc(sizeof(char));
-                  p1->nam=(char*)malloc(sizeof(char));
+                  p1=(struct _Book*)malloc(LEN);//新建链表
+                  p1->authors=(char*)malloc(sizeof(char));
+                  p1->title=(char*)malloc(sizeof(char));
                 }
 
-                p1->num=tnum;//复制书号
-                strcpy(p1->nam,tnam);//复制书名
-                strcpy(p1->aut,taut);//复制作者名字
+                p1->id=tnum;//复制书号
+                strcpy(p1->title,tnam);//复制书名
+                strcpy(p1->authors,taut);//复制作者名字
                 p1->year=tyear;//复制年份
-                p1->many=tmany;//复制个数
+                p1->copies=tmany;//复制个数
                 p1->manyofremain=tmanyofremain;//复制剩余个数 
            }
        }
@@ -333,16 +345,16 @@ void scts()//删除图书
     fp=fopen("library.txt","a");//追加文件
    for (;p!=NULL;)//把链表内容覆盖到文件
    {
-   	   fprintf(fp,"%-8d%-9s%-14s%-18d%-8d%-8d\n",p->num,p->nam,p->aut,p->year,p->many,p->manyofremain);
+   	   fprintf(fp,"%-8d%-9s%-14s%-18d%-8d%-8d\n",p->id,p->title,p->authors,p->year,p->copies,p->manyofremain);
    	   p=p->next;
    }
    fclose(fp);
    if(store_books("library.txt")==1)
    {
    	printf("\nDelete book successfully!");
+   	return 0;
    }
    
-   exit:tsmain();
 }
 
 void findbymenu()//目录系统 
@@ -356,9 +368,9 @@ void findbymenu()//目录系统
  
 void funcoffindbymenu()
 {
-	void cxtsbytitle();
-	void cxtsbyauthor();
-	void cxtsbyyear();
+	BookArray find_book_by_title (const char *title);
+	BookArray find_book_by_author (const char *author);
+	BookArray find_book_by_year (unsigned int year);
 	char choose[1]={'\0'};
 	int a; 
 	gets(choose);
@@ -366,13 +378,16 @@ void funcoffindbymenu()
 		switch(a)
 		{
 			case 1:
-			cxtsbytitle();
+			find_book_by_title (title);
+			cxts();
 			break;
 			case 2:
-			cxtsbyauthor();
+			find_book_by_author (author);
+			cxts();
 			break;
 			case 3:
-			cxtsbyyear();
+			find_book_by_year (year);
+			cxts();
 			break;
 			case 4:
 			tsmain();
@@ -383,19 +398,23 @@ void funcoffindbymenu()
 void cxts()//查询图书
 {
 	   FILE *fp;
-       int k=0,many=0,m=0,n=0;
-       char  nam[20]={'\0'},aut[20]={'\0'},year[20]={'\0'},num[20]={'\0'};
+       int k=0,copies=0,m=0,n=0;
+       char  title[20]={'\0'},authors[20]={'\0'},year[20]={'\0'},id[20]={'\0'};
        char i;
        char chazhao[20]={'\0'};
        findbymenu();
        funcoffindbymenu();
 }
 
-void cxtsbytitle()//按照标题查询图书
+
+
+BookArray find_book_by_title (const char *title)//按照标题查询图书
 {
 	   FILE *fp;
-       int k=0,many=0,manyofremain=0,m=0,n=0;
-       char  nam[20]={'\0'},aut[20]={'\0'},year[20]={'\0'},num[20]={'\0'};
+	   BookArray p;
+       int k=0,copies=0,manyofremain=0,m=0,n=0;
+       int year,id;
+       char  title1[20]={'\0'},authors[20]={'\0'};
        char i;
        char chazhao[20]={'\0'};
        if (store_books("library.txt")==0)//打开文件
@@ -403,10 +422,15 @@ void cxtsbytitle()//按照标题查询图书
            printf("\nThe record file does not exist!");
 		   tsmain();
        }
+       
+	   p.array->authors=(char*)malloc(sizeof(char));
+       p.array->title=(char*)malloc(sizeof(char));
 	   
        printf("Please enter tltle: ");
        gets(chazhao);
        m=tjzs();
+       title=&chazhao;
+       
        
        if(load_books("library.txt")==1)
        {
@@ -415,31 +439,42 @@ void cxtsbytitle()//按照标题查询图书
        
 	   for (n=0;n<m;n++)
 	   {
-	    fscanf(fp,"%s%s%s%s%d%d",num,nam,aut,year,&many,&manyofremain);
-        if(!strcmp(chazhao,nam))
+	   	
+	    fscanf(fp,"%d%s%s%d%d%d",&id,title,authors,&year,&copies,&manyofremain);
+        if(!strcmp(chazhao,title1))
         {
         	if(k==0)
             {
 			  printf("\nID\tTitle\t\t\tAuthors\t\tYear\tCopies\tCopies of remain\n");
             }
-			printf("%-8s%-24s%-16s%-8s%-8d%-8d\n",num,nam,aut,year,many,manyofremain);
+			printf("%-8d%-24s%-16s%-8d%-8d%-8d\n",id,title1,authors,year,copies,manyofremain);
+			p.array->id=id;
+			strcpy(p.array->title,title1);
+			strcpy(p.array->authors,authors);
+			p.array->year=year;
+			p.array->copies=copies;
+			p.array->manyofremain=manyofremain;
+			p.length=sizeof(p.array);
             k++;
         }
        }
         if (k==0)//文件夹为空则输出无记录并返回上一层
         {  
         printf("\nThere is no matching item!\n");
+        p.length=0;
         tsmain();
 		}
 		fclose(fp);//查询结束
-		cxts();
+		return p;
 }
 
-void cxtsbyauthor()//按作者查询图书
+BookArray find_book_by_author (const char *author)//按作者查询图书
 {
 	   FILE *fp;
-       int k=0,many=0,manyofremain=0,m=0,n=0;
-       char  nam[20]={'\0'},aut[20]={'\0'},year[20]={'\0'},num[20]={'\0'};
+	   BookArray p;
+       int k=0,copies=0,manyofremain=0,m=0,n=0;
+       int year,id;
+       char  title[20]={'\0'},authors[20]={'\0'};
        char i;
        char chazhao[20]={'\0'};
        if (store_books("library.txt")==0)//打开文件
@@ -447,10 +482,15 @@ void cxtsbyauthor()//按作者查询图书
            printf("\nThe record file does not exist!");
 		   tsmain();
        }
+       
+	   p.array->authors=(char*)malloc(sizeof(char));
+       p.array->title=(char*)malloc(sizeof(char));
 	   
-       printf("Please enter tltle: ");
+       printf("Please enter author: ");
        gets(chazhao);
        m=tjzs();
+       author=&chazhao;
+       
        
        if(load_books("library.txt")==1)
        {
@@ -459,42 +499,59 @@ void cxtsbyauthor()//按作者查询图书
        
 	   for (n=0;n<m;n++)
 	   {
-	    fscanf(fp,"%s%s%s%s%d%d",num,nam,aut,year,&many,&manyofremain);
-        if(!strcmp(chazhao,aut))
+	   	
+	    fscanf(fp,"%d%s%s%d%d%d",&id,title,authors,&year,&copies,&manyofremain);
+        if(strstr(authors,chazhao)!=NULL)
         {
         	if(k==0)
             {
 			  printf("\nID\tTitle\t\t\tAuthors\t\tYear\tCopies\tCopies of remain\n");
             }
-			printf("%-8s%-24s%-16s%-8s%-8d%-8d\n",num,nam,aut,year,many,manyofremain);
+			printf("%-8d%-24s%-16s%-8d%-8d%-8d\n",id,title,authors,year,copies,manyofremain);
+			p.array->id=id;
+			strcpy(p.array->title,title);
+			strcpy(p.array->authors,authors);
+			p.array->year=year;
+			p.array->copies=copies;
+			p.array->manyofremain=manyofremain;
+			p.length=sizeof(p.array);
             k++;
         }
        }
         if (k==0)//文件夹为空则输出无记录并返回上一层
         {  
         printf("\nThere is no matching item!\n");
+        p.length=0;
         tsmain();
 		}
 		fclose(fp);//查询结束
-		cxts();
+		return p;
 }
 
-void cxtsbyyear()//按照年份查询图书
+BookArray find_book_by_year (unsigned int year)//按照年份查询图书
 {
 	   FILE *fp;
-       int k=0,many=0,manyofremain=0,m=0,n=0;
-       char  nam[20]={'\0'},aut[20]={'\0'},year[20]={'\0'},num[20]={'\0'};
+	   BookArray p;
+       int k=0,copies=0,manyofremain=0,m=0,n=0;
+       int year1,id,chazhao;
+       char  title[20]={'\0'},authors[20]={'\0'};
        char i;
-       char chazhao[20]={'\0'};
+       char chazhao1[20]={'\0'};
        if (store_books("library.txt")==0)//打开文件
        {
            printf("\nThe record file does not exist!");
 		   tsmain();
        }
+       
+	   p.array->authors=(char*)malloc(sizeof(char));
+       p.array->title=(char*)malloc(sizeof(char));
 	   
        printf("Please enter tltle: ");
-       gets(chazhao);
+       gets(chazhao1);
+       chazhao=atoi(chazhao1);
        m=tjzs();
+       year=chazhao;
+       
        
        if(load_books("library.txt")==1)
        {
@@ -503,32 +560,41 @@ void cxtsbyyear()//按照年份查询图书
        
 	   for (n=0;n<m;n++)
 	   {
-	    fscanf(fp,"%s%s%s%s%d%d",num,nam,aut,year,&many,&manyofremain);
-        if(!strcmp(chazhao,year))
+	   	
+	    fscanf(fp,"%d%s%s%d%d%d",&id,title,authors,&year1,&copies,&manyofremain);
+        if(chazhao==year)
         {
         	if(k==0)
             {
 			  printf("\nID\tTitle\t\t\tAuthors\t\tYear\tCopies\tCopies of remain\n");
             }
-			printf("%-8s%-24s%-16s%-8s%-8d%-8d\n",num,nam,aut,year,many,manyofremain);
+			printf("%-8d%-24s%-16s%-8d%-8d%-8d\n",id,title,authors,year1,copies,manyofremain);
+			p.array->id=id;
+			strcpy(p.array->title,title);
+			strcpy(p.array->authors,authors);
+			p.array->year=year1;
+			p.array->copies=copies;
+			p.array->manyofremain=manyofremain;
+			p.length=sizeof(p.array);
             k++;
         }
        }
         if (k==0)//文件夹为空则输出无记录并返回上一层
         {  
         printf("\nThere is no matching item!\n");
+        p.length=0;
         tsmain();
 		}
 		fclose(fp);//查询结束
-		cxts();
+		return p;
 }
 
 void lltsfornotlogin()//未登录时的浏览图书
 {
 	FILE *fp;
 	int n=0;
-       int k=0,m=0,many=0,manyofremain=0;
-       char  nam[20]={'\0'},aut[20]={'\0'},year[20]={'\0'},num[20]={'\0'};
+       int k=0,m=0,copies=0,manyofremain=0;
+       char  title[20]={'\0'},authors[20]={'\0'},year[20]={'\0'},id[20]={'\0'};
   	   char i;
 	   if ((fp=fopen("library.txt","r"))==NULL)//打开文件
        {
@@ -548,8 +614,8 @@ void lltsfornotlogin()//未登录时的浏览图书
   
 	   for (m=0;m<n;m++)//输出数据
 	     {
-	     fscanf(fp,"%s%s%s%s%d%d",num,nam,aut,year,&many,&manyofremain);
-		 printf("%-8s%-40s%-40s%-8s%-8d%-8d\n",num,nam,aut,year,many,manyofremain);
+	     fscanf(fp,"%s%s%s%s%d%d",id,title,authors,year,&copies,&manyofremain);
+		 printf("%-8s%-40s%-40s%-8s%-8d%-8d\n",id,title,authors,year,copies,manyofremain);
 	 	}
 		fclose(fp);
         lmain();
@@ -559,8 +625,8 @@ void llts()//浏览图书
 {
 	FILE *fp;
 	int n=0;
-       int k=0,m=0,many=0,manyofremain=0;
-       char  nam[20]={'\0'},aut[20]={'\0'},year[20]={'\0'},num[20]={'\0'};
+       int k=0,m=0,copies=0,manyofremain=0;
+       char  title[20]={'\0'},authors[20]={'\0'},year[20]={'\0'},id[20]={'\0'};
   	   char i;
 	   if ((fp=fopen("library.txt","r"))==NULL)//打开文件
        {
@@ -580,8 +646,8 @@ void llts()//浏览图书
   
 	   for (m=0;m<n;m++)//输出数据
 	     {
-	     fscanf(fp,"%s%s%s%s%d%d",num,nam,aut,year,&many,&manyofremain);
-		 printf("%-8s%-40s%-40s%-8s%-8d%-8d\n",num,nam,aut,year,many,manyofremain);
+	     fscanf(fp,"%s%s%s%s%d%d",id,title,authors,year,&copies,&manyofremain);
+		 printf("%-8s%-40s%-40s%-8s%-8d%-8d\n",id,title,authors,year,copies,manyofremain);
 	 	}
 		fclose(fp);
         tsmain();
@@ -591,8 +657,8 @@ void lltsforusers()//用户浏览图书
 {
 	FILE *fp;
 	int n=0;
-       int k=0,m=0,many=0,manyofremain=0;
-       char  nam[20]={'\0'},aut[20]={'\0'},year[20]={'\0'},num[20]={'\0'};
+       int k=0,m=0,copies=0,manyofremain=0;
+       char  title[20]={'\0'},authors[20]={'\0'},year[20]={'\0'},id[20]={'\0'};
   	   char i;
 	   if ((fp=fopen("library.txt","r"))==NULL)//打开文件
        {
@@ -612,8 +678,8 @@ void lltsforusers()//用户浏览图书
   
 	   for (m=0;m<n;m++)//输出数据
 	     {
-	     fscanf(fp,"%s%s%s%s%d%d",num,nam,aut,year,&many,&manyofremain);
-		 printf("%-8s%-40s%-40s%-8s%-8d%-8d\n",num,nam,aut,year,many,manyofremain);
+	     fscanf(fp,"%s%s%s%s%d%d",id,title,authors,year,&copies,&manyofremain);
+		 printf("%-8s%-40s%-40s%-8s%-8d%-8d\n",id,title,authors,year,copies,manyofremain);
 	 	}
 		fclose(fp);
         jmain();
@@ -672,12 +738,12 @@ void jmain()//借阅系统函数
 void js()//借书函数
 {
 	FILE *fp,*fp3;
-	struct book *head=NULL;
-    struct book *p,*p1,*p2;
+	struct _Book *head=NULL;
+    struct _Book *p,*p1,*p2;
     int i,loop,k,a,flag=0,s=0;
     int m=0,n=0;
-    unsigned int num,year,jnum,tyear,tshuhao,znum,copies,copiesofremain,num1,year1;
-    char nam[20]={'\0'},aut[20]={'\0'};
+    unsigned int id,year,jnum,tyear,tshuhao,znum,copies,copiesofremain,num1,year1;
+    char title[20]={'\0'},authors[20]={'\0'};
 	int many=0,manyofremain=0;
 	char tname[20]={'\0'},tauthor[20]={'\0'},tchuban[20]={'\0'},
          ttname[20]={'\0'};
@@ -705,24 +771,24 @@ void js()//借书函数
 			n++;
 			if(n==1)
 			{
-				p1=p2=(struct book*)malloc(LEN);
+				p1=p2=(struct _Book*)malloc(LEN);
 				head=p1;
-				p1->aut=(char*)malloc(sizeof(char));
-				p1->nam=(char*)malloc(sizeof(char));
+				p1->authors=(char*)malloc(sizeof(char));
+				p1->title=(char*)malloc(sizeof(char));
 			}
 		    else
            	{
                 p2->next=p1;
                 p2=p1;
-                p1=(struct book*)malloc(LEN);
-                p1->aut=(char*)malloc(sizeof(char));
-				p1->nam=(char*)malloc(sizeof(char));
+                p1=(struct _Book*)malloc(LEN);
+                p1->authors=(char*)malloc(sizeof(char));
+				p1->title=(char*)malloc(sizeof(char));
             }
-			p1->num=tshuhao;//复制书号
-			strcpy(p1->nam,tname);//复制书名
-			strcpy(p1->aut,tauthor);//复制作者
+			p1->id=tshuhao;//复制书号
+			strcpy(p1->title,tname);//复制书名
+			strcpy(p1->authors,tauthor);//复制作者
 			p1->year=tyear;//复制年份
-			p1->many=many;//复制现存量
+			p1->copies=many;//复制现存量
 			p1->manyofremain=manyofremain;//复制剩余量 
 			
         }
@@ -740,7 +806,7 @@ void js()//借书函数
 	
 	for (;p!=NULL;)
 	{
-		if(p->num==znum)//判断要借书的是否存在，标记等于1，存在库存减一
+		if(p->id==znum)//判断要借书的是否存在，标记等于1，存在库存减一
 		{
             flag=1;
 		 	loop=p->manyofremain;
@@ -758,7 +824,7 @@ void js()//借书函数
 
 		for(;p !=NULL;)
     	{
-    		fprintf(fp,"%-8d%-40s%-40s%-8d%-8d%-8d\n",p->num,p->nam,p->aut,p->year,p->many,p->manyofremain);
+    		fprintf(fp,"%-8d%-40s%-40s%-8d%-8d%-8d\n",p->id,p->title,p->authors,p->year,p->copies,p->manyofremain);
    		   	p=p->next;
 		}
 		free(p);
@@ -788,10 +854,10 @@ void js()//借书函数
 		fp3=fopen("reader.txt","a");
         for (n=0;n<k;n++)
 	    {
-	    fscanf(fp,"%d%s%s%d%d%d",&num,nam,aut,&year,&copies,&copiesofremain);
-        if(znum==num)
+	    fscanf(fp,"%d%s%s%d%d%d",&id,title,authors,&year,&copies,&copiesofremain);
+        if(znum==id)
         {
-			fprintf(fp3,"%-8s%-8d%-24s%-24s%-8d\n",user,num,nam,aut,year);
+			fprintf(fp3,"%-8s%-8d%-24s%-24s%-8d\n",user,id,title,authors,year);
 			printf("You have successfully borrowed the book!\n");
         }
         }
@@ -817,8 +883,8 @@ void hs ()//还书函数
  	 FILE *fp,*fp3;
 	 struct reader *head=NULL;
 	 struct reader *p,*p1,*p2;
-	 struct book *lhead1=NULL;
-	 struct book *zp1,*lp1,*lp2;
+	 struct _Book *lhead1=NULL;
+	 struct _Book *zp1,*lp1,*lp2;
 	 int txcl=0,tmany=0,i;
 	 int tshuhao,ttnum,tnum,tyear;
 	 char tname[20]={'\0'},tauthor[20]={'\0'},tkind[20]={'\0'},
@@ -911,24 +977,24 @@ void hs ()//还书函数
 				   n++;
 				   if (n==1)
 				   {
-				       lp1=lp2=(struct book*)malloc(LEN);//新建链表
-				       lp1->aut=(char*)malloc(sizeof(char));
-				       lp1->nam=(char*)malloc(sizeof(char));
+				       lp1=lp2=(struct _Book*)malloc(LEN);//新建链表
+				       lp1->authors=(char*)malloc(sizeof(char));
+				       lp1->title=(char*)malloc(sizeof(char));
 					   lhead1=lp1;
 				   }
 				   else
 				   {
 				       lp2->next=lp1;
 					   lp2=lp1;
-					   lp1=(struct book*)malloc(LEN);//新建链表
-					   lp1->aut=(char*)malloc(sizeof(char));
-				       lp1->nam=(char*)malloc(sizeof(char));
+					   lp1=(struct _Book*)malloc(LEN);//新建链表
+					   lp1->authors=(char*)malloc(sizeof(char));
+				       lp1->title=(char*)malloc(sizeof(char));
 				   }
-				   lp1->num=tshuhao;//复制书号
-				   strcpy(lp1->nam,tname);//复制书名
-				   strcpy(lp1->aut,tauthor);//复制作者
+				   lp1->id=tshuhao;//复制书号
+				   strcpy(lp1->title,tname);//复制书名
+				   strcpy(lp1->authors,tauthor);//复制作者
 				   lp1->year=tyear;//复制年份
-				   lp1->many=tmany; //复制现存量
+				   lp1->copies=tmany; //复制现存量
 				   lp1->manyofremain=txcl;//复制剩余量 
 				   }
 				   if (n==0)
@@ -944,7 +1010,7 @@ void hs ()//还书函数
 				   zp1=lhead1;
 				   for (;zp1!=NULL;)
 				   {
-				        if(zp1->num==ttnum)//寻找书名相同
+				        if(zp1->id==ttnum)//寻找书名相同
 						++(zp1->manyofremain);//现存量加1
 						zp1=zp1->next;
 					}
@@ -955,7 +1021,7 @@ void hs ()//还书函数
 					for (;zp1!=NULL;)//把链表内容覆盖图书馆文件
 					{
                          fprintf(fp3,"%-8d%-9s%-14s%-18d%-8d%-8d\n",
-        				 zp1->num,zp1->nam,zp1->aut,zp1->year,zp1->many,zp1->manyofremain);
+        				 zp1->id,zp1->title,zp1->authors,zp1->year,zp1->copies,zp1->manyofremain);
 						 zp1=zp1->next;
 				    }
 				    printf("成功！"); 
@@ -1002,7 +1068,7 @@ void lljs()//显示借书情况函数
 void cxjs()//查询借书
 {
 	   FILE *fp;
-       int k=0,many=0,m=0,n=0;
+       int k=0,copies=0,m=0,n=0;
        
 
        char  jsnum[20]={'\0'},jsnam[20]={'\0'},jstime[20]={'\0'},tsnam[20]={'\0'};
