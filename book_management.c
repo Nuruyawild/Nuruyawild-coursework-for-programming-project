@@ -1,16 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>//其中包含system函数
-#include <conio.h>//定义了通过控制台进行 数据输入 和数据输出的函数，如getch函数。
 #include <string.h>//定义字符数组
-#include <math.h>
-#include <ctype.h>
 #include "book_management.h"
+
 #define LEN sizeof(struct _Book)//有关图书信息的结构体
 #define LEN1 sizeof(struct reader)//有关读者信息的结构体
-#define LEN2 sizeof(struct land)//有关登录系统的结构体
-
-
-
+#define LEN2 sizeof(struct Login)//有关登录系统的结构体
 
 struct reader//读者借阅信息
 {
@@ -21,97 +16,40 @@ struct reader//读者借阅信息
 	struct reader *next;
 };
 
-struct land//登录信息
-{
-	int zhanghao;
-	char password[20];
-	struct land*next;
-};
 
 
-int tjdzzs();
-int store_books(FILE *file);
-int load_books(FILE *file);
-int tjzs();//统计library文本个数函数
-void tsmenu();//显示图书信息菜单
-void jmenu();//显示借阅信息菜单
-void lmenu();//显示登录菜单
-void tsmain();//图书菜单功能
-void cxts();//查询图书菜单 
-BookArray find_book_by_year (unsigned int year);//按照年份查询图书
-BookArray find_book_by_title (const char *title);//按照标题查询图书
-BookArray find_book_by_author (const char *author);//按照作者查询图书 
-int zjts(Book);//增加图书
-int scts(Book);//删除图书
-void llts();//管理员浏览图书
-void lltsfornotlogin();//未登录时的浏览图书
-void lltsforusers();//用户浏览图书 
-int size_List(Book list);
+void ManagementMenu();//显示图书信息菜单
+void Borrow_And_Return_Menu();//显示借阅信息菜单
+void Login_Menu();//显示登录菜单
+void Management_Main();//图书菜单功能
+void Search_For_Books_Main();//查询图书菜单 
+void Display_Books_For_Librarian();//管理员浏览图书
+void Display_Books_For_NotLogin();//未登录时的浏览图书
+void Display_Books_For_Users();//用户浏览图书 
 
-void jmain();//读者借阅信息
-void js();//借书
-void hs();//还书
-void cxjs();//查询借书
-void lljs();// 浏览借书情况
+void Borrow_And_Return_Main();//读者借阅信息
+void Borrow_Books();//借书
+void Return_Books();//还书
+void Display_Borrow_Books();// 浏览借书情况
 
-void land();//登录功能系统
-void xinjian();//创建账号密码
-void lmain();//登录界面函数
+void Login();//登录功能系统
+void Create_New_Account();//创建账号密码
+void Login_Main();//登录界面函数
+
 char user[20]={'\0'};//界面显示用户名
 char title;
 char author;
-int year; 
-int a=1;//存储书的最终ID 
-
-
-
-int tjzs()//统计图书文本个数
-{
-FILE *fp;
-int txcl=0,tmany=0,n;
-char tname[20]={'\0'},tauthor[20]={'\0'},tchuban[20]={'\0'},tkind[20]={'\0'},tshuhao[20]={'\0'};
-fp=fopen("library.txt","r");//打开文件
-for (n=0;!feof(fp);n++)//逐个读文件
-fscanf(fp,"%s%s%s%s%d%d",tshuhao,tname,tauthor,tchuban,&tmany,&txcl);
-n--;
-fclose(fp);//关闭文件
-return (n);//返回个数
-}
-
-
-int tjdzzs()//统计借书读者个数函数
-
-{
-FILE *fp;
-int n,i;
-char zuser={'\0'},zhenghao[20]={'\0'},mingzi[20]={'\0'},riqi[20]={'\0'},zname[20]={'\0'};
-fp=fopen("reader.txt","r");//打开文件
-for (n=0;!feof(fp);n++)//逐个读文件
-fscanf(fp,"%s%s%s%s%s",&zuser,&zhenghao,&mingzi,&riqi,&zname);
-i++;
-fclose(fp);//关闭文件
-return (n);//返回个数
-}
-
-
-int tjzs3()//统计账号密码文本个数
-{
-FILE *fp;
-int zhao=0,n;
-char mm[20]={'\0'};
-fp=fopen("land.txt","r");//打开文件
-for (n=0;!feof(fp);n++)//逐个读文件
-fscanf(fp,"%d %s",&zhao,mm);
-n--;
-fclose(fp);//关闭文件
-return (n);//返回个数
-}
+int year;
+int a=1;//存储书的最终ID
 
 
 
 
 
-void tsmenu() //图书馆信息菜单
+
+
+
+void ManagementMenu() //图书馆信息菜单
 {
 printf("\n(logged in as: %s)\n",user);
 printf("Please choose an option:\n");
@@ -127,44 +65,43 @@ return ;
 
 
 
-void tsmain()
+void Management_Main()
 {
-	int zjts(Book);
-	int scts(Book);
+	int add_book(Book book);
+	int remove_book(Book book);
 	Book book;
-	void ctts();
-	void llts();
+	void Display_Books_For_Librarian();
 	int a;
 	char choose[2]={'\0'};
-	tsmenu();
+	ManagementMenu();
 	gets(choose);
 	a=atoi(choose);
 
 	switch(a)
 	{
 	case 1:
-		zjts(book);
-		tsmain();
+		add_book(book);
+		Management_Main();
 		break;
 	case 2:
-		scts(book);
-		tsmain();
+		remove_book(book);
+		Management_Main();
 		break;
 	case 3:
-		cxts();
+		Search_For_Books_Main();
 		break;
 	case 4:
-		llts();
+		Display_Books_For_Librarian();
 		break;
 	case 5:
-		lmain();
+		Login_Main();
 		break;
 	}
     
 }
 
 
-int zjts(Book book)//增加图书
+int add_book(Book book)//增加图书
 {
 	FILE*fp;
 	char i;
@@ -258,7 +195,7 @@ int load_books(FILE *file)
    }
 }
 
-int scts(Book book)//删除图书
+int remove_book(Book book)//删除图书
 {
 	   struct _Book *head=NULL;
        struct _Book *p,*p1,*p2;
@@ -281,9 +218,9 @@ int scts(Book book)//删除图书
           gets(jjnum1);
           jjnum=atoi(jjnum1);
 	      fp=fopen("library.txt","r");
-		  j=tjzs();
+		  j=Number_Of_Books();
 		  fp3=fopen("reader.txt","r");
-		  q=tjdzzs();
+		  q=Records_Of_Books();
 		  
 		  for(k=0;k<q;k++)
 		  {
@@ -379,23 +316,23 @@ void funcoffindbymenu()
 		{
 			case 1:
 			find_book_by_title (title);
-			cxts();
+			Search_For_Books_Main();
 			break;
 			case 2:
 			find_book_by_author (author);
-			cxts();
+			Search_For_Books_Main();
 			break;
 			case 3:
 			find_book_by_year (year);
-			cxts();
+			Search_For_Books_Main();
 			break;
 			case 4:
-			tsmain();
+			Management_Main();
 			break;
 		}
  } 
  
-void cxts()//查询图书
+void Search_For_Books_Main()//查询图书
 {
 	   FILE *fp;
        int k=0,copies=0,m=0,n=0;
@@ -420,7 +357,7 @@ BookArray find_book_by_title (const char *title)//按照标题查询图书
        if (store_books("library.txt")==0)//打开文件
        {
            printf("\nThe record file does not exist!");
-		   tsmain();
+		   Management_Main();
        }
        
 	   p.array->authors=(char*)malloc(sizeof(char));
@@ -428,7 +365,7 @@ BookArray find_book_by_title (const char *title)//按照标题查询图书
 	   
        printf("Please enter tltle: ");
        gets(chazhao);
-       m=tjzs();
+       m=Number_Of_Books();
        title=&chazhao;
        
        
@@ -462,7 +399,7 @@ BookArray find_book_by_title (const char *title)//按照标题查询图书
         {  
         printf("\nThere is no matching item!\n");
         p.length=0;
-        tsmain();
+        Management_Main();
 		}
 		fclose(fp);//查询结束
 		return p;
@@ -480,7 +417,7 @@ BookArray find_book_by_author (const char *author)//按作者查询图书
        if (store_books("library.txt")==0)//打开文件
        {
            printf("\nThe record file does not exist!");
-		   tsmain();
+		   Management_Main();
        }
        
 	   p.array->authors=(char*)malloc(sizeof(char));
@@ -488,7 +425,7 @@ BookArray find_book_by_author (const char *author)//按作者查询图书
 	   
        printf("Please enter author: ");
        gets(chazhao);
-       m=tjzs();
+       m=Number_Of_Books();
        author=&chazhao;
        
        
@@ -522,7 +459,7 @@ BookArray find_book_by_author (const char *author)//按作者查询图书
         {  
         printf("\nThere is no matching item!\n");
         p.length=0;
-        tsmain();
+        Management_Main();
 		}
 		fclose(fp);//查询结束
 		return p;
@@ -540,7 +477,7 @@ BookArray find_book_by_year (unsigned int year)//按照年份查询图书
        if (store_books("library.txt")==0)//打开文件
        {
            printf("\nThe record file does not exist!");
-		   tsmain();
+		   Management_Main();
        }
        
 	   p.array->authors=(char*)malloc(sizeof(char));
@@ -549,7 +486,7 @@ BookArray find_book_by_year (unsigned int year)//按照年份查询图书
        printf("Please enter tltle: ");
        gets(chazhao1);
        chazhao=atoi(chazhao1);
-       m=tjzs();
+       m=Number_Of_Books();
        year=chazhao;
        
        
@@ -583,13 +520,13 @@ BookArray find_book_by_year (unsigned int year)//按照年份查询图书
         {  
         printf("\nThere is no matching item!\n");
         p.length=0;
-        tsmain();
+        Management_Main();
 		}
 		fclose(fp);//查询结束
 		return p;
 }
 
-void lltsfornotlogin()//未登录时的浏览图书
+void Display_Books_For_NotLogin()//未登录时的浏览图书
 {
 	FILE *fp;
 	int n=0;
@@ -600,9 +537,9 @@ void lltsfornotlogin()//未登录时的浏览图书
        {
 	        
            printf("\nRecord file does not exist!");
-           tsmain();
+           Management_Main();
 	   }
-	   n= tjzs();
+	   n= Number_Of_Books();
        if (n==0)
       {
 	   
@@ -618,10 +555,10 @@ void lltsfornotlogin()//未登录时的浏览图书
 		 printf("%-8s%-40s%-40s%-8s%-8d%-8d\n",id,title,authors,year,copies,manyofremain);
 	 	}
 		fclose(fp);
-        lmain();
+        Login_Main();
 }
 
-void llts()//浏览图书
+void Display_Books_For_Librarian()//浏览图书
 {
 	FILE *fp;
 	int n=0;
@@ -632,9 +569,9 @@ void llts()//浏览图书
        {
 	        
            printf("\nRecord file does not exist!");
-           tsmain();
+           Management_Main();
 	   }
-	   n= tjzs();
+	   n= Number_Of_Books();
        if (n==0)
       {
 	   
@@ -650,10 +587,10 @@ void llts()//浏览图书
 		 printf("%-8s%-40s%-40s%-8s%-8d%-8d\n",id,title,authors,year,copies,manyofremain);
 	 	}
 		fclose(fp);
-        tsmain();
+        Management_Main();
 }
 
-void lltsforusers()//用户浏览图书
+void Display_Books_For_Users()//用户浏览图书
 {
 	FILE *fp;
 	int n=0;
@@ -664,9 +601,9 @@ void lltsforusers()//用户浏览图书
        {
 	        
            printf("\nRecord file does not exist!");
-           tsmain();
+           Management_Main();
 	   }
-	   n= tjzs();
+	   n= Number_Of_Books();
        if (n==0)
       {
 	   
@@ -682,10 +619,10 @@ void lltsforusers()//用户浏览图书
 		 printf("%-8s%-40s%-40s%-8s%-8d%-8d\n",id,title,authors,year,copies,manyofremain);
 	 	}
 		fclose(fp);
-        jmain();
+        Borrow_And_Return_Main();
 }
 	
-void jmenu()//显示借书菜单
+void Borrow_And_Return_Menu()//显示借书菜单
 {
 	printf("\n(logged in as: %s)\n",user); 
 	printf("1)Borrow a book\n");
@@ -698,35 +635,34 @@ void jmenu()//显示借书菜单
 }
 
 
-void jmain()//借阅系统函数
+void Borrow_And_Return_Main()//借阅系统函数
 {
-	void js();
-	void hs();
-	void lljs();
-	void cxjs();
+	void Borrow_Books();
+	void Return_Books();
+	void Display_Borrow_Books();
 	int a;
 	char choose[1]={'\0'};
-	jmenu();
+	Borrow_And_Return_Menu();
 	gets(choose);
 	a=atoi(choose);
 	
 		switch(a)
 		{
 			case 1:
-			js();
+			Borrow_Books();
 			break;
 			case 2:
-			hs();
+			Return_Books();
 			break;
 			case 3:
-			cxts();
+			Search_For_Books_Main();
 			break;
 			case 4:
-			lltsforusers();
+			Display_Books_For_Users();
 			break;
 			case 5:
 			printf("\nLogging out...\n");
-			lmain();
+			Login_Main();
 			break;
 		}
 	
@@ -735,7 +671,7 @@ void jmain()//借阅系统函数
 
 
 
-void js()//借书函数
+void Borrow_Books()//借书函数
 {
 	FILE *fp,*fp3;
 	struct _Book *head=NULL;
@@ -763,7 +699,7 @@ void js()//借书函数
 		gets(znum1);
 		znum=atoi(znum1);
 		fp=fopen("library.txt","r");
-        k=tjzs();//统计图书馆文件个数
+        k=Number_Of_Books();//统计图书馆文件个数
     
 	for (i=0;i<k;i++)//先将图书信息建立链表，更改库存
     	{
@@ -838,7 +774,7 @@ void js()//借书函数
         
 		fp3=fopen("reader.txt","r");
         fp=fopen("library.txt","r");
-        a=tjdzzs();//统计借书记录数
+        a=Records_Of_Books();//统计借书记录数
         for (n=0;n<a;n++)
         {
         	
@@ -864,21 +800,21 @@ void js()//借书函数
         
         fclose(fp);
 	    fclose(fp3);
-		exit:jmain();//调用借阅系统
+		exit:Borrow_And_Return_Main();//调用借阅系统
    }
 	else
     {
     	if(loop==0)
-        printf("此书已被借完!");//否则输出此书已被借完
+        printf("The book has been borrowed out!");//否则输出此书已被借完
 		if(flag==0)
-		printf("查找无此书!");
+		printf("This book does not exist!");
 	}
-        jmain();//调用借阅系统
+        Borrow_And_Return_Main();//调用借阅系统
 
 }
 
 
-void hs ()//还书函数
+void Return_Books ()//还书函数
 {
  	 FILE *fp,*fp3;
 	 struct reader *head=NULL;
@@ -896,17 +832,17 @@ void hs ()//还书函数
      {
  	 if ((fp=fopen("reader.txt","r"))==NULL)//不存在读者文件，则输出不能还书
 	  {
-		 printf("\n 不存在借书者!按任意键退出!");
-		 jmain();
+		 printf("\n There are no borrowers!");
+		 Borrow_And_Return_Main();
       }
 
 	  else
 	  {{
-	  	 lljs();
-	     printf("\n请输入ID:\n请输入:");
+	  	 Display_Borrow_Books();
+	     printf("\nPlease enter the ID of the book you want to return:");
 		 gets(ttnum1);//输入ID
 		 ttnum=atoi(ttnum1);
-		 k=tjdzzs();//获取读者文件夹信息个数
+		 k=Records_Of_Books();//获取读者文件夹信息个数
 		 for(;!feof(fp);)//读取读者文件夹信息
            {
 			fscanf(fp,"%s%d%s%s%d",tuser,&tnum,ttitle,tauthor,&tyear);
@@ -970,7 +906,7 @@ void hs ()//还书函数
 		  {
 			  n=0;flag=0;
 			  fp3=fopen("library.txt","r");//打开图书馆文件
-			  k=tjzs();//获取图书馆文件个数
+			  k=Number_Of_Books();//获取图书馆文件个数
 			  for (i=0;i<k;i++)//将图书馆文件复制到链表
 			  {
 			       fscanf(fp3,"%d%s%s%d%d%d\n",&tshuhao,tname,tauthor,&tyear,&tmany,&txcl);//读取信息
@@ -1024,18 +960,17 @@ void hs ()//还书函数
         				 zp1->id,zp1->title,zp1->authors,zp1->year,zp1->copies,zp1->manyofremain);
 						 zp1=zp1->next;
 				    }
-				    printf("成功！"); 
+				    printf("Return the book successfully!"); 
 					fclose(fp3);
-					jmain();//调用借阅系统
+					Borrow_And_Return_Main();//调用借阅系统
 					}
 					else
-					printf("不存在此信息!按任意键返回!");
-					getch();//返回
-					jmain();//调用借阅系统
+					printf("This information does not exist!");
+					Borrow_And_Return_Main();//调用借阅系统
 }
 
 
-void lljs()//显示借书情况函数
+void Display_Borrow_Books()//显示借书情况函数
 
 {
     FILE *fp;
@@ -1045,9 +980,9 @@ void lljs()//显示借书情况函数
     {
          
         printf("\n记录文件不存在!按任意键返回");
-	    jmain();
+	    Borrow_And_Return_Main();
     }
-    n=tjdzzs();
+    n=Records_Of_Books();
     printf("\nID\tTitle\t\t\tAuthor\t\tYear\n");
     if(n==0)
 	{  
@@ -1064,87 +999,38 @@ void lljs()//显示借书情况函数
 	}
 	fclose(fp);
 }
-					
-void cxjs()//查询借书
+
+
+
+void Login_Menu()//显示登录菜单
 {
-	   FILE *fp;
-       int k=0,copies=0,m=0,n=0;
-       
-
-       char  jsnum[20]={'\0'},jsnam[20]={'\0'},jstime[20]={'\0'},tsnam[20]={'\0'};
-       char i;
-       char chazhao[20]={'\0'};
-       if ((fp=fopen("reader.txt","r"))==NULL)//打开文件
-       {
-	        
-           printf("\n记录文件不存在!按任意键返回");
-  		   getch();
-		   jmain();
-       }
-	    
-       printf("请输入证号或姓名查询：\n");
-       scanf("%s",chazhao);
-        
-	   m=tjzs();
-	   for (n=0;n<m;n++)
-	   {
-	    fscanf(fp,"%s%s%s%s",jsnum,jsnam,jstime,tsnam);
-        if(!strcmp(chazhao,jsnum))
-        {
-        	if(k==0)
-            {
-			  printf("查询结果:\n\n");
-			  printf("\n证号\t读者姓名\t\t借书日期\t书名\n");
-            }
-			printf("\n%-8d%-23s%-18s%-10s\n",jsnum,jsnam,jstime,tsnam);
-            k++;
-         }
-       }
-	    if (k==0)//文件夹为空则输出无记录并返回上一层
-        {  
-        printf("\n无符合记录!\n");
-        getch();
-        jmain();
-		}
-       fclose(fp);//查询结束
-		
-		jmain();
-}
-
-
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`
-
-void lmenu()//显示登录菜单
-{
-
-
 printf("\nPlease choose an option:\n1) Register an account\n2) Login\n3) Search for books\n4) Display all books\n5) Quit\nOption: ");
 return ;
 }
 
 
-void lmain()//登录功能函数
+void Login_Main()//登录功能函数
 {
-	void land();
-	void xinjian(); 
+	void Login();
+	void Create_New_Account(); 
 	int a;
 	char choose[2]={'\0'};
-	lmenu();
+	Login_Menu();
 	gets(choose);
 	a=atoi(choose);
 	switch(a)//功能函数
   {
 	  case 1:
-	    xinjian();
+	    Create_New_Account();
 	    break;
 	  case 2:
-	  	land();
+	  	Login();
 	  	break;
 	  case 3:
-	  	cxts();
+	  	Search_For_Books_Main();
 	  	break;
 	  case 4:
-	  	lltsfornotlogin();//未登录时的浏览图书
+	  	Display_Books_For_NotLogin();//未登录时的浏览图书
 		break; 
 	  case 5:
 	  	printf("\nThank you for using the library!\n");
@@ -1152,9 +1038,7 @@ void lmain()//登录功能函数
 	  	exit(0);
 	  default:
 		printf("\nSorry, the option you entered was invalid, please try again.\n");
-		lmain();
-    getch();
-  	exit(0);
+		Login_Main();
 	break;
   }
 }
@@ -1167,12 +1051,12 @@ int match(char m[20],char a[20])//匹配数据库中的账号密码
 	char zhanghao[20];
 	char password[20];
 
-	if ((fp=fopen("land.txt","r"))==NULL)//不存在读者文件
+	if ((fp=fopen("Login.txt","r"))==NULL)//不存在读者文件
 	  {
           
 		 printf("\nPlease register an account!");
 	 	 
-		lmain();
+		Login_Main();
 	
       }
 
@@ -1200,7 +1084,7 @@ int match(char m[20],char a[20])//匹配数据库中的账号密码
  }
 
 
-void xinjian()//新建账户密码
+void Create_New_Account()//新建账户密码
 {
 	FILE *fp;
 	char m[20];
@@ -1208,35 +1092,35 @@ void xinjian()//新建账户密码
 	char zhanghao[20];
 	char password[20];
 	int i;
-	if ((fp=fopen("land.txt","r"))==NULL)//if语句：打开图书馆文件，不存在此文件则新建
+	if ((fp=fopen("Login.txt","r"))==NULL)//if语句：打开图书馆文件，不存在此文件则新建
 	{
-      fp=fopen("land.txt","w");
+      fp=fopen("Login.txt","w");
       fclose(fp);
     }
 	
-	printf("Please enter your username: ");
+	printf("\nPlease enter your username: ");
 	gets(zhanghao);
 	printf("Please enter your password: ");
 	gets(password);
-	fp=fopen("land.txt","r");
+	fp=fopen("Login.txt","r");
 	fscanf(fp,"%s %s",&m,n);
     if(match(zhanghao, password)==1||match(zhanghao, password)==2)
     {
-        printf("Sorry, registration unsuccessful, the username you entered already exists.\n");
+        printf("\nSorry, registration unsuccessful, the username you entered already exists.\n");
 	}
 	else
 	{
-		fp=fopen("land.txt","a");
+		fp=fopen("Login.txt","a");
 		fprintf(fp,"%s %s\n",zhanghao,password);
         fclose(fp);
-        printf("Registered library account successfully!");
+        printf("\nRegistered library account successfully!\n");
 	}
 	
-    lmain();
+    Login_Main();
 }
 
 
-void land()//输入账户密码的登录函数
+void Login()//输入账户密码的登录函数
 {
 	char zhanghao[20];
 	char password[20];
@@ -1244,7 +1128,7 @@ void land()//输入账户密码的登录函数
 	char hit=0;
 	 
 	
-	printf("Please enter your username: ");
+	printf("\nPlease enter your username: ");
     gets(zhanghao);
     
 	printf("Please enter your password: ");
@@ -1253,26 +1137,24 @@ void land()//输入账户密码的登录函数
      if(i==1)
 	 {
 	   strcpy(user,zhanghao);
-	   jmain();
+	   Borrow_And_Return_Main();
 	 }
 	 if(i==2)
 	 {
 	   strcpy(user,zhanghao);
-	   tsmain(); 
+	   Management_Main(); 
 	 }
 	 else
 	 {
 	 	if(i==-1)
 		 {
-		 printf("密码错误!");
-		 getch();
-         land();
+		 printf("\nPassword error!\n");
+         Login();
 		 }
 		 if(i==0)
-		 printf("不存在此用户");
-		 getch();
+		 printf("\nThis user does not exist!\n");
 		  
-		 lmain();
+		 Login_Main();
 	 }
 }
 
@@ -1286,7 +1168,7 @@ void land()//输入账户密码的登录函数
 int main()
 {
 	
-	lmain();
+	Login_Main();
 	return 0;
 }
 

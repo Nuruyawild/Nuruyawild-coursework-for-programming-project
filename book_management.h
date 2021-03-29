@@ -20,6 +20,7 @@ typedef struct _Book {
 		struct _Book*next;
 }Book;
 
+
 typedef struct _BookArray {
 	 Book* array; // pointer to array (or linked list) of struct Book.
 	 unsigned int length; // number of elements in the (Book*) array 
